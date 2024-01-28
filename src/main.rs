@@ -35,8 +35,6 @@ impl Render for CounterView {
             .text_color(rgb(0x000000))
             .child(
                 div()
-                    .items_center()
-                    .justify_center()
                     .border()
                     .border_color(gpui::black())
                     .bg(rgb(0x90cf8e))
