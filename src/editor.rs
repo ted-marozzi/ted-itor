@@ -13,7 +13,7 @@ pub fn build_editor_view(cx: &mut WindowContext<'_>) -> gpui::View<EditorView> {
         value: INITIAL_EDITOR_TEXT.to_owned(),
     });
 
-    let _ = cx.observe_keystrokes(|_ev, _cx| println!("Window Context keystroke"));
+    let sub = cx.observe_keystrokes(|_ev, _cx| println!("Window Context keystroke"));
 
     cx.new_view(|_cx| EditorView { text_model })
 }
