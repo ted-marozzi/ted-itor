@@ -13,6 +13,8 @@ pub fn build_editor_view(cx: &mut WindowContext<'_>) -> gpui::View<EditorView> {
         value: INITIAL_EDITOR_TEXT.to_owned(),
     });
 
+    let _ = cx.observe_keystrokes(|_ev, _cx| println!("Window Context keystroke"));
+
     cx.new_view(|_cx| EditorView { text_model })
 }
 
@@ -39,7 +41,9 @@ pub struct Editor {
 
 impl Render for Editor {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
-        div().child(self.text_model.read(cx).value.clone())
+        div()
+            .on_key_down(|_ev, _cx| println!("Editor Window Context keystroke"))
+            .child(self.text_model.read(cx).value.clone())
     }
 }
 
