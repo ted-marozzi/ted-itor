@@ -1,7 +1,5 @@
-use gpui::{
-    div, AnyElement, AnyView, IntoElement, ParentElement, Render, RenderOnce, Styled, View,
-    ViewContext, VisualContext, WindowContext,
-};
+use gpui::*;
+
 use smallvec::SmallVec;
 
 use crate::theme::Theme;
@@ -38,30 +36,39 @@ impl ParentElement for Background {
     }
 }
 
+#[derive(IntoElement)]
 pub struct Layout {
-    toolbar: View<Toolbar>,
-    body: AnyView,
+    toolbar: Toolbar,
+    body: AnyElement,
 }
 
 impl Layout {
-    pub fn new<W: Render + 'static>(cx: &mut ViewContext<W>, body: impl Render) -> Self {
+    pub fn new() -> Self {
         Self {
-            toolbar: cx.new_view(|_| Toolbar),
-            body: cx.new_view(|_| body).into(),
+            toolbar: Toolbar,
+            body: div().into_any_element(),
         }
     }
-}
 
-impl Render for Layout {
-    fn render(&mut self, _cx: &mut gpui::ViewContext<Self>) -> impl IntoElement {
-        div().child(self.toolbar.clone()).child(self.body.clone())
+    pub fn body(mut self, body: impl IntoElement) -> Self {
+        self.body = body.into_any_element();
+        self
     }
 }
 
+impl RenderOnce for Layout {
+    fn render(self, _cx: &mut WindowContext) -> impl IntoElement {
+        div()
+            .child(self.toolbar)
+            .child(div().p_6().child(self.body))
+    }
+}
+
+#[derive(IntoElement)]
 struct Toolbar;
 
-impl Render for Toolbar {
-    fn render(&mut self, cx: &mut gpui::ViewContext<Self>) -> impl IntoElement {
+impl RenderOnce for Toolbar {
+    fn render(self, cx: &mut WindowContext) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
         div()

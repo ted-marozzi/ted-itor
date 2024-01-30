@@ -1,52 +1,48 @@
-use gpui::{
-    div, Context, InteractiveElement, IntoElement, Model, ParentElement, Render, ViewContext,
-    VisualContext, WindowContext,
-};
+use gpui::*;
 
 use crate::ui::{Background, Layout};
 
 /* cspell:disable-next-line */
 const INITIAL_EDITOR_TEXT: &str = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
 
-pub fn build_editor_view(cx: &mut WindowContext<'_>) -> gpui::View<EditorView> {
-    let text_model = cx.new_model(|_cx: &mut gpui::ModelContext<'_, Text>| Text {
-        value: INITIAL_EDITOR_TEXT.to_owned(),
+pub fn build_editor_view(cx: &mut WindowContext<'_>) -> gpui::View<Editor> {
+    let editor_view = cx.new_view(|_cx| Editor {
+        text: INITIAL_EDITOR_TEXT.to_owned(),
     });
 
-    let sub = cx.observe_keystrokes(|_ev, _cx| println!("Window Context keystroke"));
+    let keystroke_editor_view = editor_view.clone();
 
-    cx.new_view(|_cx| EditorView { text_model })
-}
+    let subscription = cx.observe_keystrokes(move |ev, cx| {
+        keystroke_editor_view.update(cx, |editor, cx| {
+            let keystroke = &ev.keystroke.key;
 
-pub struct EditorView {
-    pub text_model: Model<Text>,
-}
+            if let Some(ime_key) = &ev.keystroke.ime_key {
+                editor.text.push_str(ime_key);
+            } else {
+                match keystroke.as_str() {
+                    "backspace" => {
+                        editor.text.pop();
+                    }
+                    keystroke_str => eprintln!("Unhandled keystroke {keystroke_str}"),
+                };
+            }
 
-impl Render for EditorView {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
-        Background::default().child(cx.new_view(|cx| {
-            Layout::new(
-                cx,
-                Editor {
-                    text_model: self.text_model.clone(),
-                },
-            )
-        }))
-    }
+            cx.notify();
+        });
+    });
+
+    // Store the subscription as a global so it doesn't get dropped
+    cx.set_global(subscription);
+
+    editor_view
 }
 
 pub struct Editor {
-    text_model: Model<Text>,
+    pub text: String,
 }
 
 impl Render for Editor {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
-        div()
-            .on_key_down(|_ev, _cx| println!("Editor Window Context keystroke"))
-            .child(self.text_model.read(cx).value.clone())
+    fn render(&mut self, _cx: &mut ViewContext<Self>) -> impl IntoElement {
+        Background::default().child(Layout::new().body(self.text.clone()))
     }
-}
-
-pub struct Text {
-    pub value: String,
 }
