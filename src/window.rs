@@ -1,4 +1,4 @@
-use gpui::{GlobalPixels, WindowOptions};
+use gpui::*;
 
 pub fn get_window_options() -> WindowOptions {
     return WindowOptions {
@@ -13,7 +13,7 @@ pub fn get_window_options() -> WindowOptions {
             },
         }),
         titlebar: Some(gpui::TitlebarOptions {
-            title: Some("Teditor".into()),
+            title: Some("Ted-itor".into()),
             appears_transparent: true,
             traffic_light_position: None,
         }),

@@ -1,4 +1,4 @@
-use gpui::{black, rgb, AppContext, Rgba};
+use gpui::*;
 
 #[derive(Debug)]
 pub struct Theme {

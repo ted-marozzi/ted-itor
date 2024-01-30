@@ -1,5 +1,5 @@
 [package]
-name = "teditor"
+name = "ted-itor"
 version = "0.1.0"
 edition = "2021"
 
