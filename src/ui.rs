@@ -11,7 +11,7 @@ pub struct Background {
 }
 
 impl Background {
-    pub fn default() -> Self {
+    pub fn new() -> Self {
         Background {
             children: SmallVec::new(),
         }

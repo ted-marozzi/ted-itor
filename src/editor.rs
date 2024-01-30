@@ -12,7 +12,7 @@ pub fn build_editor_view(cx: &mut WindowContext<'_>) -> gpui::View<Editor> {
 
     let keystroke_editor_view = editor_view.clone();
 
-    let subscription = cx.observe_keystrokes(move |ev, cx| {
+    cx.observe_keystrokes(move |ev, cx| {
         keystroke_editor_view.update(cx, |editor, cx| {
             let keystroke = &ev.keystroke.key;
 
@@ -29,10 +29,8 @@ pub fn build_editor_view(cx: &mut WindowContext<'_>) -> gpui::View<Editor> {
 
             cx.notify();
         });
-    });
-
-    // Store the subscription as a global so it doesn't get dropped
-    cx.set_global(subscription);
+    })
+    .detach();
 
     editor_view
 }
@@ -43,6 +41,6 @@ pub struct Editor {
 
 impl Render for Editor {
     fn render(&mut self, _cx: &mut ViewContext<Self>) -> impl IntoElement {
-        Background::default().child(Layout::new().body(self.text.clone()))
+        Background::new().child(Layout::new().body(self.text.clone()))
     }
 }
