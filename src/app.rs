@@ -1,8 +1,7 @@
 use crate::{editor::build_editor_view, theme::Theme, window::get_window_options};
-use gpui::AppContext;
 
 pub fn run_app(app: gpui::App) {
-    app.run(|cx: &mut AppContext| {
+    app.run(move |cx| {
         Theme::init(cx);
 
         cx.open_window(get_window_options(), build_editor_view);
