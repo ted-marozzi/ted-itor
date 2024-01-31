@@ -11,12 +11,23 @@ pub struct Editor;
 impl Render for Editor {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
         let view = cx.new_view(|_cx| Counter { count: 1 });
-        let clone = view.clone();
 
+        CounterButton { child: view }
+    }
+}
+
+#[derive(IntoElement)]
+struct CounterButton {
+    child: View<Counter>,
+}
+
+impl RenderOnce for CounterButton {
+    fn render(self, _cx: &mut WindowContext) -> impl IntoElement {
+        let child_clone = self.child.clone();
         Button {
-            child: clone.into(),
+            child: self.child.into(),
             on_click: Box::new(move |_ev, cx| {
-                view.update(cx, |counter, cx: &mut ViewContext<'_, Counter>| {
+                child_clone.update(cx, |counter, cx: &mut ViewContext<'_, Counter>| {
                     counter.count += 1;
                     println!("The count is {}", counter.count); // Always prints 2, no matter how many presses???
                     cx.notify();
