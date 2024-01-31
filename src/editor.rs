@@ -1,37 +1,37 @@
 use gpui::*;
 
-pub fn build_editor_view(cx: &mut WindowContext<'_>) -> gpui::View<Editor> {
-    let editor_view = cx.new_view(|_cx| Editor {});
-
-    editor_view
+pub fn build_editor_view(cx: &mut WindowContext<'_>) -> View<Editor> {
+    cx.new_view(|_cx| Editor {})
 }
 
 pub struct Editor;
 
 impl Render for Editor {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
-        CounterButton {
+        cx.new_view(|cx| CounterButton {
             child: Counter { count: 1 },
-        }
+        })
     }
 }
 
-#[derive(IntoElement)]
-struct CounterButton {
+pub struct CounterButton {
     child: Counter,
 }
 
-impl RenderOnce for CounterButton {
-    fn render(self, cx: &mut WindowContext) -> impl IntoElement {
-        let view = cx.new_view(|_cx| self.child);
-
-        let view_clone = view.clone();
+impl Render for CounterButton {
+    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+        let view = cx.view().clone();
         Button {
-            child: view.into(),
-            on_click: Box::new(move |_ev, cx| {
-                view_clone.update(cx, |counter, cx: &mut ViewContext<'_, Counter>| {
-                    counter.count += 1;
-                    println!("The count is {}", counter.count); // Always prints 2, no matter how many presses???
+            child: div()
+                .child("Button")
+                .child(self.child.count.to_string())
+                .into_any_element(),
+            on_click: Box::new(move |ev, cx| {
+                println!("click");
+                view.update(cx, |this, cx| {
+                    this.child.count += 1;
+                    println!("click");
+
                     cx.notify();
                 });
             }),
@@ -41,7 +41,7 @@ impl RenderOnce for CounterButton {
 
 #[derive(IntoElement)]
 pub struct Button {
-    child: AnyView,
+    child: AnyElement,
     on_click: Box<dyn Fn(&MouseDownEvent, &mut WindowContext)>,
 }
 
@@ -61,11 +61,4 @@ impl RenderOnce for Button {
 
 pub struct Counter {
     count: usize,
-}
-
-impl Render for Counter {
-    fn render(&mut self, _cx: &mut ViewContext<Self>) -> impl IntoElement {
-        let current_count = self.count.to_string();
-        div().child(current_count)
-    }
 }
