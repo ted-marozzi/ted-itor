@@ -38,16 +38,21 @@ impl ParentElement for Background {
 
 #[derive(IntoElement)]
 pub struct Layout {
-    toolbar: Toolbar,
+    title_bar: AnyElement,
     body: AnyElement,
 }
 
 impl Layout {
     pub fn new() -> Self {
         Self {
-            toolbar: Toolbar::new(),
+            title_bar: TitleBar::new().into_any_element(),
             body: div().into_any_element(),
         }
+    }
+
+    pub fn title_bar(mut self, title_bar: impl IntoElement) -> Self {
+        self.title_bar = title_bar.into_any_element();
+        self
     }
 
     pub fn body(mut self, body: impl IntoElement) -> Self {
@@ -59,21 +64,25 @@ impl Layout {
 impl RenderOnce for Layout {
     fn render(self, _cx: &mut WindowContext) -> impl IntoElement {
         div()
-            .child(self.toolbar)
+            .child(self.title_bar)
             .child(div().p_6().child(self.body))
     }
 }
 
 #[derive(IntoElement)]
-struct Toolbar;
+pub struct TitleBar {
+    children: SmallVec<[AnyElement; 2]>,
+}
 
-impl Toolbar {
+impl TitleBar {
     pub fn new() -> Self {
-        Toolbar
+        TitleBar {
+            children: SmallVec::new(),
+        }
     }
 }
 
-impl RenderOnce for Toolbar {
+impl RenderOnce for TitleBar {
     fn render(self, cx: &mut WindowContext) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
@@ -84,15 +93,29 @@ impl RenderOnce for Toolbar {
             .bg(theme.panel_color)
             .border_color(theme.border_color)
             .border_b()
+            .when(self.children.len() > 0, |this| this.children(self.children))
     }
+}
+
+impl ParentElement for TitleBar {
+    fn extend(&mut self, elements: impl Iterator<Item = AnyElement>) {
+        self.children.extend(elements);
+    }
+}
+
+pub enum ButtonVariant {
+    Primary,
+    Danger,
 }
 
 // TODO: Make a clear input button
 // TODO: Create button variants
 #[derive(IntoElement)]
 pub struct Button {
+    base: Div,
     child: AnyElement,
     on_click: Box<dyn Fn(&MouseDownEvent, &mut WindowContext)>,
+    variant: ButtonVariant,
 }
 
 impl Button {
@@ -102,8 +125,22 @@ impl Button {
         on_click: Box<dyn Fn(&MouseDownEvent, &mut WindowContext)>,
     ) -> Self {
         Self {
+            base: div(),
             child: child.into_any_element(),
             on_click,
+            variant: ButtonVariant::Primary,
+        }
+    }
+
+    pub fn variant(mut self, variant: ButtonVariant) -> Self {
+        self.variant = variant;
+        self
+    }
+
+    pub fn color(&self, theme: &Theme) -> Hsla {
+        match self.variant {
+            ButtonVariant::Primary => theme.primary_color,
+            ButtonVariant::Danger => theme.danger_color,
         }
     }
 }
@@ -112,16 +149,24 @@ impl RenderOnce for Button {
     fn render(self, cx: &mut WindowContext) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
-        div().flex().justify_center().items_center().child(
-            div()
-                .p_2()
-                .rounded_md()
-                .hover(|style| style.bg(red()))
-                .flex()
-                .bg(theme.danger_color)
-                .on_mouse_down(MouseButton::Left, self.on_click)
-                .child(self.child),
-        )
+        let color = self.color(theme);
+
+        self.base
+            .p_2()
+            .rounded_md()
+            .hover(|style| style.bg(red()))
+            .flex()
+            .justify_center()
+            .items_center()
+            .bg(color)
+            .on_mouse_down(MouseButton::Left, self.on_click)
+            .child(self.child)
+    }
+}
+
+impl Styled for Button {
+    fn style(&mut self) -> &mut gpui::StyleRefinement {
+        self.base.style()
     }
 }
 
@@ -137,6 +182,13 @@ impl TextInput {
             text_display_view: cx.new_view(|_cx| TextDisplay { text: initial_text }),
             focus_handle: cx.focus_handle(),
         }
+    }
+
+    pub fn clear(self, cx: &mut WindowContext) {
+        self.text_display_view.update(cx, |text_display, cx| {
+            text_display.text = String::from("");
+            cx.notify();
+        })
     }
 }
 
@@ -212,6 +264,7 @@ impl Divider {
         }
     }
 }
+
 impl RenderOnce for Divider {
     fn render(self, cx: &mut WindowContext) -> impl IntoElement {
         let theme = cx.global::<Theme>();
