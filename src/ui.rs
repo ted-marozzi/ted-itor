@@ -108,8 +108,6 @@ pub enum ButtonVariant {
     Danger,
 }
 
-// TODO: Make a clear input button
-// TODO: Create button variants
 #[derive(IntoElement)]
 pub struct Button {
     base: Div,
@@ -150,11 +148,12 @@ impl RenderOnce for Button {
         let theme = cx.global::<Theme>();
 
         let color = self.color(theme);
+        let hover_color = hsla(color.h, color.s, (color.l - 0.08).clamp(0., 1.), color.a);
 
         self.base
             .p_2()
             .rounded_md()
-            .hover(|style| style.bg(red()))
+            .hover(|style| style.bg(hover_color))
             .flex()
             .justify_center()
             .items_center()
